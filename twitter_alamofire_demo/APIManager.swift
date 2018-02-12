@@ -40,8 +40,7 @@ class APIManager: SessionManager {
         } else if let user = user {
           print("Welcome \(user.name)")
           
-          // MARK: TODO: set User.current, so that it's persisted
-          
+          User.current = user
           
           success()
         }
@@ -54,7 +53,7 @@ class APIManager: SessionManager {
   func logout() {
     clearCredentials()
     
-    // TODO: Clear current user by setting it to nil
+    User.current = nil
     
     NotificationCenter.default.post(name: NSNotification.Name("didLogout"), object: nil)
   }
@@ -77,21 +76,25 @@ class APIManager: SessionManager {
     }
   }
   
-  func getHomeTimeLine(completion: @escaping ([Tweet]?, Error?) -> ()) {
+  func getHomeTimeLine(withMaxId maxId: Int64?, completion: @escaping ([Tweet]?, Error?) -> ()) {
     
-    // This uses tweets from disk to avoid hitting rate limit. Comment out if you want fresh
-    // tweets,
-    if let data = UserDefaults.standard.object(forKey: "hometimeline_tweets") as? Data {
-      let tweetDictionaries = NSKeyedUnarchiver.unarchiveObject(with: data) as! [[String: Any]]
-      let tweets = tweetDictionaries.flatMap({ (dictionary) -> Tweet in
-        Tweet(dictionary: dictionary)
-      })
-      
-      completion(tweets, nil)
-      return
+    //     This uses tweets from disk to avoid hitting rate limit. Comment out if you want fresh
+    //     tweets,
+    //    if let data = UserDefaults.standard.object(forKey: "hometimeline_tweets") as? Data {
+    //      let tweetDictionaries = NSKeyedUnarchiver.unarchiveObject(with: data) as! [[String: Any]]
+    //      let tweets = tweetDictionaries.flatMap({ (dictionary) -> Tweet in
+    //        Tweet(dictionary: dictionary)
+    //      })
+    //
+    //      completion(tweets, nil)
+    //      return
+    //    }
+    var endpoint = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+    if let maxId = maxId {
+      endpoint = "https://api.twitter.com/1.1/statuses/home_timeline.json?max_id=\(maxId)"
     }
     
-    request(URL(string: "https://api.twitter.com/1.1/statuses/home_timeline.json")!, method: .get)
+    request(URL(string: endpoint)!, method: .get)
       .validate()
       .responseJSON { (response) in
         switch response.result {
@@ -118,15 +121,69 @@ class APIManager: SessionManager {
     }
   }
   
-  // MARK: TODO: Favorite a Tweet
   
-  // MARK: TODO: Un-Favorite a Tweet
+  // MARK: Favorite a Tweet
+  func favorite(_ tweet: Tweet, completion: @escaping (Tweet?, Error?) -> ()) {
+    let urlString = "https://api.twitter.com/1.1/favorites/create.json"
+    let parameters = ["id": tweet.id]
+    request(urlString, method: .post, parameters: parameters, encoding: URLEncoding.queryString).validate().responseJSON { (response) in
+      if response.result.isSuccess,
+        let tweetDictionary = response.result.value as? [String: Any] {
+        let tweet = Tweet(dictionary: tweetDictionary)
+        completion(tweet, nil)
+      } else {
+        completion(nil, response.result.error)
+      }
+    }
+  }
   
-  // MARK: TODO: Retweet
+  // MARK: Un-Favorite a Tweet
+  func unfavorite(_ tweet: Tweet, completion: @escaping (Tweet?, Error?) -> ()) {
+    let urlString = "https://api.twitter.com/1.1/favorites/destroy.json"
+    let parameters = ["id": tweet.id]
+    request(urlString, method: .post, parameters: parameters, encoding: URLEncoding.queryString).validate().responseJSON { (response) in
+      if response.result.isSuccess,
+        let tweetDictionary = response.result.value as? [String: Any] {
+        let tweet = Tweet(dictionary: tweetDictionary)
+        completion(tweet, nil)
+      } else {
+        completion(nil, response.result.error)
+      }
+    }
+  }
   
-  // MARK: TODO: Un-Retweet
+  // MARK: Retweet
+  func retweet(_ tweet: Tweet, completion: @escaping (Tweet?, Error?) -> ()) {
+    let urlString = "https://api.twitter.com/1.1/statuses/retweet.json"
+    let parameters = ["id": tweet.id]
+    request(urlString, method: .post, parameters: parameters, encoding: URLEncoding.queryString).validate().responseJSON { (response) in
+      if response.result.isSuccess,
+        let tweetDictionary = response.result.value as? [String: Any] {
+        let tweet = Tweet(dictionary: tweetDictionary)
+        completion(tweet, nil)
+      } else {
+        completion(nil, response.result.error)
+      }
+    }
+  }
+  
+  // MARK: Un-Retweet
+  func unretweet(_ tweet: Tweet, completion: @escaping (Tweet?, Error?) -> ()) {
+    let urlString = "https://api.twitter.com/1.1/statuses/unretweet.json"
+    let parameters = ["id": tweet.id]
+    request(urlString, method: .post, parameters: parameters, encoding: URLEncoding.queryString).validate().responseJSON { (response) in
+      if response.result.isSuccess,
+        let tweetDictionary = response.result.value as? [String: Any] {
+        let tweet = Tweet(dictionary: tweetDictionary)
+        completion(tweet, nil)
+      } else {
+        completion(nil, response.result.error)
+      }
+    }
+  }
   
   // MARK: TODO: Compose Tweet
+  
   
   // MARK: TODO: Get User Timeline
   
