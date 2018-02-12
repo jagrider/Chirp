@@ -22,7 +22,7 @@ The following **stretch** features are implemented:
 - [x] The current signed in user will be persisted across restarts
 - [x] Each tweet should display the relative timestamp for each tweet "8m", "7h"
 - [x] User should be able to unretweet and unfavorite and should decrement the retweet and favorite count.
-- [ ] Links in tweets are clickable.
+- [X] Links in tweets are clickable.
 - [x] User can load more tweets once they reach the bottom of the feed using infinite loading similar to the actual Twitter client.
 
 The following **additional** features are implemented:
@@ -39,7 +39,7 @@ Please list two areas of the assignment you'd like to **discuss further with you
 
 Here's a walkthrough of implemented user stories:
 
-<img src='http://i.imgur.com/link/to/your/gif/file.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
+<img src='Twitter_demo.gif' title='Video Walkthrough' width='' alt='Video Walkthrough' />
 
 GIF created with [LiceCap](http://www.cockos.com/licecap/).
 

@@ -8,25 +8,31 @@
 
 import UIKit
 import AlamofireImage
-import TTTAttributedLabel
+import ActiveLabel
 
 class TweetCell: UITableViewCell {
   
   @IBOutlet weak var profileImageView: UIImageView!
-  @IBOutlet weak var tweetTextLabel: UILabel!
+  @IBOutlet weak var tweetTextLabel: ActiveLabel!
   @IBOutlet weak var nameLabel: UILabel!
   @IBOutlet weak var usernameLabel: UILabel!
   @IBOutlet weak var timestampLabel: UILabel!
-  @IBOutlet weak var retweetCountLabel: TTTAttributedLabel!
+  @IBOutlet weak var retweetCountLabel: UILabel!
   @IBOutlet weak var favoriteCountLabel: UILabel!
   @IBOutlet weak var favoriteButton: UIButton!
   @IBOutlet weak var retweetButton: UIButton!
   
-  
-  
   var tweet: Tweet! {
     didSet {
       tweetTextLabel.text = tweet.text
+      tweetTextLabel.URLSelectedColor = .twitterBlueColor()
+      tweetTextLabel.handleURLTap { message in
+        UIApplication.shared.open(message, options: [:], completionHandler: {
+          (success) in
+            print("Opening link...")
+        })
+      }
+      
       nameLabel.text = tweet.user.name
       usernameLabel.text = "@" + tweet.user.username
       timestampLabel.text = tweet.createdAtString

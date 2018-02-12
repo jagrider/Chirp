@@ -13,6 +13,7 @@ target 'twitter_alamofire_demo' do
   pod 'AlamofireImage', '~> 3.3'
   pod 'DateToolsSwift'
   pod 'TTTAttributedLabel'
+  pod 'ActiveLabel'
 
   target 'twitter_alamofire_demoTests' do
     inherit! :search_paths
