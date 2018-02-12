@@ -47,7 +47,7 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
     self.refreshControl?.addTarget(self, action: #selector(getTimeline), for: .valueChanged)
     self.tableView.addSubview(refreshControl)
     
-    // Get next 10 tweets
+    // Get next 20 tweets
     getTimeline()
     
   }
