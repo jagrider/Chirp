@@ -3,7 +3,7 @@
 //  twitter_alamofire_demo
 //
 //  Created by Jonathan Grider on 2/11/18.
-//  Copyright © 2018 Charles Hieger. All rights reserved.
+//  Copyright © 2018 Jonathan Grider. All rights reserved.
 //
 
 import Foundation

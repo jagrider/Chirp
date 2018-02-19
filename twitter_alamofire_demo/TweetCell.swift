@@ -10,6 +10,10 @@ import UIKit
 import AlamofireImage
 import ActiveLabel
 
+protocol TweetCellDelegate {
+  func didTapUrl(url: NSURL)
+}
+
 class TweetCell: UITableViewCell {
   
   @IBOutlet weak var profileImageView: UIImageView!
@@ -22,15 +26,18 @@ class TweetCell: UITableViewCell {
   @IBOutlet weak var favoriteButton: UIButton!
   @IBOutlet weak var retweetButton: UIButton!
   
+  var hapticFeedback = UIImpactFeedbackGenerator()
+  var delegate: TweetCellDelegate?
+  
   var tweet: Tweet! {
     didSet {
       tweetTextLabel.text = tweet.text
       tweetTextLabel.URLSelectedColor = .twitterBlueColor()
+      tweetTextLabel.hashtagColor = .twitterBlueColor()
+      tweetTextLabel.mentionColor = .twitterBlueColor()
+      tweetTextLabel.URLColor = .twitterBlueColor()
       tweetTextLabel.handleURLTap { message in
-        UIApplication.shared.open(message, options: [:], completionHandler: {
-          (success) in
-            print("Opening link...")
-        })
+        self.delegate?.didTapUrl(url: message as NSURL)
       }
       
       nameLabel.text = tweet.user.name
@@ -39,8 +46,9 @@ class TweetCell: UITableViewCell {
       
       // Set up profile picture image
       profileImageView.af_setImage(withURL: URL(string: tweet.profileImageString)!)
-      profileImageView.layer.cornerRadius = 4
+      profileImageView.layer.cornerRadius = profileImageView.frame.size.width / 2
       profileImageView.clipsToBounds = true
+      profileImageView.contentMode = .scaleAspectFit
       
       updateRetweetAndFavorite()
     }
@@ -102,6 +110,7 @@ class TweetCell: UITableViewCell {
   
   @IBAction func pressedFavorite(_ sender: Any) {
     print("Pressed favorite!")
+    hapticFeedback.impactOccurred()
     self.favoriteButton.isUserInteractionEnabled = false
     self.retweetButton.isUserInteractionEnabled = false
     if tweet.favorited != true {
@@ -114,18 +123,17 @@ class TweetCell: UITableViewCell {
       
       // Send a POST request to the POST retweet endpoint
       APIManager.shared.favorite(tweet) { (tweet: Tweet?, error: Error?) in
-        if let  error = error {
+        if let error = error {
           print("Error favoriting tweet: \(error.localizedDescription)")
           self.retweetButton.isUserInteractionEnabled = true
           self.favoriteButton.isUserInteractionEnabled = true
-        } else if let tweet = tweet {
-          print("Successfully favorited the following Tweet: \n\(tweet.text)")
+        } else {
+          //print("Successfully favorited the following Tweet: \n\(tweet.text)")
           self.retweetButton.isUserInteractionEnabled = true
           self.favoriteButton.isUserInteractionEnabled = true
           //self.tweet = tweet
         }
       }
-      
     } else {
       // Update the local tweet model
       tweet.favoriteCount -= 1
@@ -136,24 +144,24 @@ class TweetCell: UITableViewCell {
       
       // Send a POST request to the POST unretweet endpoint
       APIManager.shared.unfavorite(tweet) { (tweet: Tweet?, error: Error?) in
-        if let  error = error {
+        if let error = error {
           print("Error unfavoriting tweet: \(error.localizedDescription)")
           self.retweetButton.isUserInteractionEnabled = true
           self.favoriteButton.isUserInteractionEnabled = true
-        } else if let tweet = tweet {
-          print("Successfully unfavorited the following Tweet: \n\(tweet.text)")
+        } else {
+          //print("Successfully unfavorited the following Tweet: \n\(tweet.text)")
           self.retweetButton.isUserInteractionEnabled = true
           self.favoriteButton.isUserInteractionEnabled = true
           //self.tweet = tweet
         }
       }
-      
     }
   }
   
   
   @IBAction func pressedRetweet(_ sender: Any) {
     print("Pressed retweet!")
+    hapticFeedback.impactOccurred()
     self.retweetButton.isUserInteractionEnabled = false
     self.favoriteButton.isUserInteractionEnabled = false
     if tweet.retweeted != true {
@@ -166,19 +174,17 @@ class TweetCell: UITableViewCell {
       
       // Send a POST request to the POST favorites/create endpoint
       APIManager.shared.retweet(tweet) { (tweet: Tweet?, error: Error?) in
-        if let  error = error {
+        if let error = error {
           print("Error retweeting tweet: \(error.localizedDescription)")
           self.retweetButton.isUserInteractionEnabled = true
           self.favoriteButton.isUserInteractionEnabled = true
-        } else if let tweet = tweet {
-          print("Successfully retweeted the following Tweet: \n\(tweet.text)")
+        } else {
+          //print("Successfully retweeted the following Tweet: \n\(tweet.text)")
           self.retweetButton.isUserInteractionEnabled = true
           self.favoriteButton.isUserInteractionEnabled = true
           //self.tweet = tweet
         }
       }
-      
-      
     } else {
       // Update the local tweet model
       tweet.retweetCount -= 1
@@ -189,12 +195,12 @@ class TweetCell: UITableViewCell {
       
       // Send a POST request to the POST favorites/destroy endpoint
       APIManager.shared.unretweet(tweet) { (tweet: Tweet?, error: Error?) in
-        if let  error = error {
+        if let error = error {
           print("Error unretweeting tweet: \(error.localizedDescription)")
           self.retweetButton.isUserInteractionEnabled = true
           self.favoriteButton.isUserInteractionEnabled = true
-        } else if let tweet = tweet {
-          print("Successfully unretweeted the following Tweet: \n\(tweet.text)")
+        } else {
+          //print("Successfully unretweeted the following Tweet: \n\(tweet.text)")
           self.retweetButton.isUserInteractionEnabled = true
           self.favoriteButton.isUserInteractionEnabled = true
           //self.tweet = tweet

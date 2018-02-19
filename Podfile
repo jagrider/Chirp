@@ -14,6 +14,7 @@ target 'twitter_alamofire_demo' do
   pod 'DateToolsSwift'
   pod 'TTTAttributedLabel'
   pod 'ActiveLabel'
+  pod 'KMPlaceholderTextView', '~> 1.3.0'
 
   target 'twitter_alamofire_demoTests' do
     inherit! :search_paths

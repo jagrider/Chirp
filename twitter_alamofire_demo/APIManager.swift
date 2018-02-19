@@ -78,20 +78,9 @@ class APIManager: SessionManager {
   
   func getHomeTimeLine(withMaxId maxId: Int64?, completion: @escaping ([Tweet]?, Error?) -> ()) {
     
-    //     This uses tweets from disk to avoid hitting rate limit. Comment out if you want fresh
-    //     tweets,
-    //    if let data = UserDefaults.standard.object(forKey: "hometimeline_tweets") as? Data {
-    //      let tweetDictionaries = NSKeyedUnarchiver.unarchiveObject(with: data) as! [[String: Any]]
-    //      let tweets = tweetDictionaries.flatMap({ (dictionary) -> Tweet in
-    //        Tweet(dictionary: dictionary)
-    //      })
-    //
-    //      completion(tweets, nil)
-    //      return
-    //    }
-    var endpoint = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+    var endpoint = "https://api.twitter.com/1.1/statuses/home_timeline.json?tweet_mode=extended"
     if let maxId = maxId {
-      endpoint = "https://api.twitter.com/1.1/statuses/home_timeline.json?max_id=\(maxId)"
+      endpoint = "https://api.twitter.com/1.1/statuses/home_timeline.json?max_id=\(maxId)&tweet_mode=extended"
     }
     
     request(URL(string: endpoint)!, method: .get)
@@ -124,7 +113,7 @@ class APIManager: SessionManager {
   
   // MARK: Favorite a Tweet
   func favorite(_ tweet: Tweet, completion: @escaping (Tweet?, Error?) -> ()) {
-    let urlString = "https://api.twitter.com/1.1/favorites/create.json"
+    let urlString = "https://api.twitter.com/1.1/favorites/create.json?tweet_mode=extended"
     let parameters = ["id": tweet.id]
     request(urlString, method: .post, parameters: parameters, encoding: URLEncoding.queryString).validate().responseJSON { (response) in
       if response.result.isSuccess,
@@ -139,7 +128,7 @@ class APIManager: SessionManager {
   
   // MARK: Un-Favorite a Tweet
   func unfavorite(_ tweet: Tweet, completion: @escaping (Tweet?, Error?) -> ()) {
-    let urlString = "https://api.twitter.com/1.1/favorites/destroy.json"
+    let urlString = "https://api.twitter.com/1.1/favorites/destroy.json?tweet_mode=extended"
     let parameters = ["id": tweet.id]
     request(urlString, method: .post, parameters: parameters, encoding: URLEncoding.queryString).validate().responseJSON { (response) in
       if response.result.isSuccess,
@@ -154,7 +143,7 @@ class APIManager: SessionManager {
   
   // MARK: Retweet
   func retweet(_ tweet: Tweet, completion: @escaping (Tweet?, Error?) -> ()) {
-    let urlString = "https://api.twitter.com/1.1/statuses/retweet.json"
+    let urlString = "https://api.twitter.com/1.1/statuses/retweet.json?tweet_mode=extended"
     let parameters = ["id": tweet.id]
     request(urlString, method: .post, parameters: parameters, encoding: URLEncoding.queryString).validate().responseJSON { (response) in
       if response.result.isSuccess,
@@ -169,7 +158,7 @@ class APIManager: SessionManager {
   
   // MARK: Un-Retweet
   func unretweet(_ tweet: Tweet, completion: @escaping (Tweet?, Error?) -> ()) {
-    let urlString = "https://api.twitter.com/1.1/statuses/unretweet.json"
+    let urlString = "https://api.twitter.com/1.1/statuses/unretweet.json?tweet_mode=extended"
     let parameters = ["id": tweet.id]
     request(urlString, method: .post, parameters: parameters, encoding: URLEncoding.queryString).validate().responseJSON { (response) in
       if response.result.isSuccess,
@@ -183,9 +172,67 @@ class APIManager: SessionManager {
   }
   
   // MARK: TODO: Compose Tweet
+  func composeTweet(with text: String, completion: @escaping (Tweet?, Error?) -> ()) {
+    let urlString = "https://api.twitter.com/1.1/statuses/update.json?tweet_mode=extended"
+    let parameters = ["status": text]
+    oauthManager.client.post(urlString, parameters: parameters, headers: nil, body: nil, success: { (response: OAuthSwiftResponse) in
+      let tweetDictionary = try! response.jsonObject() as! [String: Any]
+      let tweet = Tweet(dictionary: tweetDictionary)
+      completion(tweet, nil)
+    }) { (error: OAuthSwiftError) in
+      completion(nil, error.underlyingError)
+    }
+  }
   
+  // Reply to a tweet
+  func reply(id: String, text: String, completion: @escaping (Tweet?, Error?) -> ()) {
+    let urlString = "https://api.twitter.com/1.1/statuses/update.json?tweet_mode=extended"
+    let parameters = ["in_reply_to_status_id": id, "status": text]
+    oauthManager.client.post(urlString, parameters: parameters, headers: nil, body: nil, success: { (response: OAuthSwiftResponse) in
+      let tweetDictionary = try! response.jsonObject() as! [String: Any]
+      let tweet = Tweet(dictionary: tweetDictionary)
+      completion(tweet,nil)
+    }) { (error: OAuthSwiftError) in
+      completion(nil, error.underlyingError)
+    }
+  }
+
   
   // MARK: TODO: Get User Timeline
+  func getUserTimeline(withMaxId maxId: Int64?, completion: @escaping ([Tweet]?, Error?) -> ()) {
+    
+    var endpoint = "https://api.twitter.com/1.1/statuses/user_timeline.json?tweet_mode=extended"
+    if let maxId = maxId {
+      endpoint = "https://api.twitter.com/1.1/statuses/user_timeline.json?max_id=\(maxId)&tweet_mode=extended"
+    }
+    
+    request(URL(string: endpoint)!, method: .get).validate().responseJSON { (response) in
+        switch response.result {
+        case .failure(let error):
+          completion(nil, error)
+          return
+        case .success:
+          guard let tweetDictionaries = response.result.value as? [[String: Any]] else {
+            print("Failed to parse tweets")
+            let error = NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey : "Failed to parse tweets"])
+            completion(nil, error)
+            return
+          }
+//
+//          let data = NSKeyedArchiver.archivedData(withRootObject: tweetDictionaries)
+//          UserDefaults.standard.set(data, forKey: "hometimeline_tweets")
+//          UserDefaults.standard.synchronize()
+          
+          let tweets = tweetDictionaries.flatMap({ (dictionary) -> Tweet in
+            Tweet(dictionary: dictionary)
+          })
+          completion(tweets, nil)
+        }
+    }
+  }
+  
+  
+  
   
   
   //--------------------------------------------------------------------------------//

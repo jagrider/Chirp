@@ -22,23 +22,27 @@ class Tweet {
   var createdAtString: String // Display date
   var profileImageString: String // profile URL
   
-//  // For Retweets
-//  var retweetedByUser: User?  // user who retweeted if tweet is retweet
+  // For Retweets
+  var retweetedByUser: User?  // user who retweeted if tweet is retweet
   
   // MARK: - Create initializer with dictionary
   init(dictionary: [String: Any]) {
     
-//    // Is this a re-tweet?
-//    if let originalTweet = dictionary["retweeted_status"] as? [String: Any] {
-//      let userDictionary = dictionary["user"] as! [String: Any]
-//      self.retweetedByUser = User(dictionary: userDictionary)
-//
-//      // Change tweet to original tweet
-//      dictionary = originalTweet
-//    }
+    var dictionary = dictionary
+    
+    // Is this a re-tweet?
+    if let originalTweet = dictionary["retweeted_status"] as? [String: Any] {
+      let userDictionary = dictionary["user"] as! [String: Any]
+      self.retweetedByUser = User(dictionary: userDictionary)
+
+      // Change tweet to original tweet
+      dictionary = originalTweet
+
+      dictionary["full_text"] = "Retweeted by @" + (userDictionary["screen_name"] as! String) + ":\n" + (dictionary["full_text"] as! String)
+    }
     
     id = dictionary["id"] as! Int64
-    text = dictionary["text"] as! String
+    text = dictionary["full_text"] as! String
     favoriteCount = dictionary["favorite_count"] as? Int ?? 0
     favorited = dictionary["favorited"] as! Bool
     retweetCount = dictionary["retweet_count"] as? Int ?? 0

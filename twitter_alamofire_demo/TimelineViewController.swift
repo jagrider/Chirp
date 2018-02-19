@@ -8,13 +8,19 @@
 
 import UIKit
 
-class TimelineViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate {
+class TimelineViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate, ComposeViewControllerDelegate, TweetCellDelegate {
+  
+  func did(post: Tweet) {
+    tweets = [post] + tweets
+    tableView.reloadData()
+  }
   
   var tweets: [Tweet] = []
   let logoutAlert = UIAlertController(title: "Confirm", message: "Are you sure you want to log out?", preferredStyle: .alert)
   var refreshControl: UIRefreshControl!
   var loadingMoreView: InfiniteScrollActivityView?
   var dataLoading: Bool = false
+  var url: NSURL?
   
   @IBOutlet weak var tableView: UITableView!
   
@@ -60,6 +66,8 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
     let cell = tableView.dequeueReusableCell(withIdentifier: "TweetCell", for: indexPath) as! TweetCell
     
     cell.tweet = tweets[indexPath.row]
+    cell.delegate = self
+    cell.selectionStyle = .none
     
     return cell
   }
@@ -108,6 +116,8 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
     
     navigationController?.navigationBar.isTranslucent = false
     navigationController?.navigationBar.barTintColor = .twitterBlueColor()
+    navigationController?.navigationBar.tintColor = .white
+    navigationController?.navigationBar.barStyle = .black
     let twitterTitleLogo = UIImage(named: "TwitterLogo")
     navigationItem.titleView = UIImageView(image: twitterTitleLogo)
     navigationItem.titleView?.contentMode = .scaleAspectFit
@@ -185,9 +195,42 @@ class TimelineViewController: UIViewController, UITableViewDelegate, UITableView
         }
       }
     }
-    
+  }
+  
+  func didTapUrl(url: NSURL) {
+    self.url = url
+    performSegue(withIdentifier: "WebViewSegue", sender: nil)
+  }
+  
+  override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    if segue.identifier == "DetailSegue" {
+      let cell = sender as! UITableViewCell
+      if let indexPath = tableView.indexPath(for: cell) {
+        let tweet = tweets[indexPath.row]
+        let destination = segue.destination as! TweetDetailViewController
+        destination.tweet = tweet
+      }
+    } else if segue.identifier == "ComposeSegue" {
+      let destinationNavController = segue.destination as! UINavigationController
+      let destination = destinationNavController.topViewController as! ComposeViewController
+      destination.delegate = self
+    } else if segue.identifier == "WebViewSegue" {
+      let destinationNavController = segue.destination as! UINavigationController
+      let destination = destinationNavController.topViewController as! WebViewController
+      destination.url = self.url
+    }
   }
   
   
+  
+  /*
+   // MARK: - Navigation
+   
+   // In a storyboard-based application, you will often want to do a little preparation before navigation
+   override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+   // Get the new view controller using segue.destinationViewController.
+   // Pass the selected object to the new view controller.
+   }
+   */
   
 }
